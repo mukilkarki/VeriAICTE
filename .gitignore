@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+instance/*.sqlite3
+instance/uploads/
+*service-account*.json
+veriaicte-firebase-adminsdk-fbsvc-11473ea5d0.json

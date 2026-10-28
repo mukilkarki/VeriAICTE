@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}VeriAICTE — Institution Compliance Workspace{% endblock %}
+{% block content %}
+<section class="portal-hero">
+  <div class="portal-hero-copy">
+    <div class="portal-kicker"><span></span> INSTITUTION COMPLIANCE WORKSPACE</div>
+    <h1>Applications and evidence,<br><em>organized for review.</em></h1>
+    <p class="portal-lead">A secure workspace for institutions and reviewers to prepare applications, organize supporting documents, and follow each review step.</p>
+    <div class="portal-actions">
+      <a class="btn primary" href="{{ url_for('register') }}">Create institution account <span aria-hidden="true">→</span></a>
+      <a class="btn portal-secondary" href="{{ url_for('login') }}">Reviewer / admin sign in</a>
+    </div>
+    <div class="portal-assurances">
+      <span><b aria-hidden="true">✓</b> Clear application status</span>
+      <span><b aria-hidden="true">✓</b> Evidence in one place</span>
+      <span><b aria-hidden="true">✓</b> Human-led decisions</span>
+    </div>
+  </div>
+  <div class="portal-preview" aria-label="Illustration of an application review">
+    <div class="portal-preview-head">
+      <span class="portal-preview-icon" aria-hidden="true">V</span>
+      <span><small>APPLICATION WORKSPACE</small><b>Review at a glance</b></span>
+      <span class="portal-preview-menu" aria-hidden="true">•••</span>
+    </div>
+    <div class="portal-preview-body">
+      <div class="portal-preview-label">APPLICATION PATHWAY</div>
+      <div class="portal-pathway"><span class="portal-pathway-icon" aria-hidden="true">01</span><span><b>Institution application</b><small>Application details and supporting proofs</small></span><span class="portal-arrow" aria-hidden="true">↗</span></div>
+      <div class="portal-preview-label portal-evidence-label">EVIDENCE CHECKLIST</div>
+      <div class="portal-evidence"><span class="portal-evidence-check" aria-hidden="true">✓</span><span><b>Uploaded documents</b><small>Available for reviewer inspection</small></span><span class="portal-evidence-state">ORGANIZED</span></div>
+      <div class="portal-evidence"><span class="portal-evidence-pending" aria-hidden="true">2</span><span><b>Review and corrections</b><small>Follow updates in the application</small></span><span class="portal-evidence-state pending">TRACKED</span></div>
+    </div>
+    <div class="portal-preview-foot"><span>VERIAICTE WORKSPACE</span><span>Review support · Not a decision</span></div>
+    <div class="portal-stamp" aria-hidden="true"><span>FORMAL</span><b>REVIEW<br>WORKFLOW</b></div>
+  </div>
+</section>
+
+<section class="portal-section">
+  <div class="portal-section-heading">
+    <div class="eyebrow">A CLEARER PROCESS</div>
+    <h2>One workspace, from submission to review.</h2>
+    <p>Keep application information, supporting evidence, and follow-up actions together.</p>
+  </div>
+  <div class="portal-features">
+    <article><span class="portal-feature-icon" aria-hidden="true">01</span><h3>Prepare the application</h3><p>Complete the pathway-specific details and review profile information before submitting.</p></article>
+    <article><span class="portal-feature-icon" aria-hidden="true">02</span><h3>Organize evidence</h3><p>Upload supporting files and keep extracted text alongside the application for review.</p></article>
+    <article><span class="portal-feature-icon" aria-hidden="true">03</span><h3>Track review actions</h3><p>Follow application status, reviewer feedback, and any requested corrections.</p></article>
+  </div>
+</section>
+
+<section class="portal-notice">
+  <span class="portal-notice-icon" aria-hidden="true">i</span>
+  <p><b>Important notice</b><br>VeriAICTE is an independent preliminary screening workspace. It is not an official AICTE service and does not authenticate documents, determine eligibility, or issue regulatory decisions. Findings require verification by a qualified human reviewer.</p>
+</section>
+{% endblock %}

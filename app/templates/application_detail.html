@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+{% block title %}Application #{{ application.id }} — VeriAICTE{% endblock %}
+{% block content %}
+{% set review_analysis = application.get('review_analysis') or {} %}
+<p class="crumb"><a href="{{ url_for('admin_dashboard' if current_user.role in ['admin','reviewer'] else 'institution_dashboard') }}">← Back to workspace</a> / Application #{{ application.id }}</p>
+<div class="page-head">
+  <div>
+    <div class="eyebrow">{{ pathways[application.pathway] }}</div>
+    <h1>{{ application.title }}</h1>
+    <p>{{ application.institution_name }} · AICTE PID {{ application.institution_pid or '—' }} · Submitter {{ application.submitter_email }}</p>
+  </div>
+  <span class="status s-{{ application.status|lower|replace(' ','-') }}">{{ application.status }}</span>
+</div>
+<div class="detail-grid">
+  <div class="stack">
+    {% if application.institution_profile %}
+    <details class="panel padded">
+      <summary><b>Institution profile on file</b></summary>
+      <div class="profile-snapshot">
+        {% for key, label in [
+          ('institution_type','Institution type'), ('address','Address'), ('state','State'),
+          ('district','District'), ('pin_code','PIN code'), ('phone','Phone'),
+          ('institution_email','Institution email'), ('sponsoring_body_name','Sponsoring body'),
+          ('sponsoring_body_address','Sponsoring body address'), ('head_name','Principal / Director'),
+          ('head_designation','Designation'), ('head_phone','Head phone'), ('head_email','Head email'),
+          ('affiliation','Affiliating University / Board'), ('programmes','Programmes and approved intake'),
+          ('faculty','Faculty'), ('infrastructure','Infrastructure'), ('accreditation','Accreditation'),
+          ('governance','Governance'), ('approval_records','Approval records'),
+          ('official_website','Official website'), ('mandatory_disclosure','Mandatory disclosure')
+        ] %}
+          {% if application.institution_profile.get(key) %}
+          <p><b>{{ label }}</b><br>{{ application.institution_profile[key] }}</p>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </details>
+    {% endif %}
+    {% if application.pathway == 'new' and application.new_institution_details %}
+    <section class="panel padded">
+      <h2>New Institution Details</h2>
+      {% for section_title, fields in [
+        ('Institution Details', [
+          ('institution_name','Name of the Institution'), ('address','Address & Location'),
+          ('state','State / UT'), ('district','District'), ('pin_code','PIN Code'),
+          ('institution_type','Institution Type'), ('minority_status','Minority Status'),
+          ('minority_type','Minority Type'), ('website_url','Website URL'),
+          ('official_email','Official Email ID'), ('landline_phone','Landline / Alternate Phone')
+        ]),
+        ('Trust / Society / Company', [
+          ('promoting_body_name','Name of the Promoting Body'), ('registration_number','Registration Number'),
+          ('registration_date','Registration Date'), ('trust_pan','PAN of Trust / Society'),
+          ('signatory_name','Authorized Signatory Name'), ('signatory_designation','Signatory Designation'),
+          ('signatory_mobile','Signatory Mobile Number'), ('signatory_email','Signatory Email ID')
+        ]),
+        ('Banking Details', [
+          ('bank_name','Bank Name'), ('bank_account_number','Bank Account Number'),
+          ('ifsc_code','IFSC Code')
+        ]),
+        ('Land & Building', [
+          ('land_ownership_type','Land Ownership Type'), ('land_area_acres','Total Land Area (acres)'),
+          ('built_up_area_sq_meters','Total Built-up Area (sq. meters)')
+        ])
+      ] %}
+      <div class="detail-section">
+        <h3>{{ section_title }}</h3>
+        <div class="profile-snapshot">
+          {% for key, label in fields %}
+            {% if application.new_institution_details.get(key) %}
+            <p><b>{{ label }}</b><br>{{ application.new_institution_details[key] }}</p>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+    {% if application.pathway == 'existing' and application.existing_institution_details %}
+    <section class="panel padded">
+      <h2>Existing Institution / EoA Details</h2>
+      {% for section_title, fields in [
+        ('Basic Identification', [
+          ('pid','AICTE Permanent ID (PID)'),
+          ('academic_application_id','Current Academic Application ID')
+        ]),
+        ('Head of Institution (HOI)', [
+          ('hoi_name','Name of Principal / Director'), ('appointment_type','Appointment Type'),
+          ('hoi_mobile','Mobile Number of HOI'), ('hoi_email','Email ID of HOI')
+        ]),
+        ('Affiliation Status', [
+          ('affiliating_university','Affiliating University / Board'),
+          ('affiliation_validity_year','Affiliation Validity Year')
+        ]),
+        ('Course & Intake Request', [
+          ('existing_approved_intake','Existing Approved Intake (Per Course)'),
+          ('applied_intake_status','Applied Intake Status')
+        ]),
+        ('Operational & Quality Metrics', [
+          ('total_faculty','Total Count of Appointed Faculty'),
+          ('current_student_strength','Total Enrolled Students (Current Strength)'),
+          ('mandatory_disclosure_url','Mandatory Disclosure Web Link')
+        ]),
+        ('Safety & Compliance', [
+          ('fire_safety_expiry_date','Fire Safety Certificate Expiry Date'),
+          ('structural_stability_expiry_date','Structural Stability Certificate Expiry Date'),
+          ('anti_ragging_status','Anti-Ragging Committee Setup Status')
+        ])
+      ] %}
+      <div class="detail-section">
+        <h3>{{ section_title }}</h3>
+        <div class="profile-snapshot">
+          {% for key, label in fields %}
+            {% set value = application.existing_institution_details.get(key) %}
+            {% if key == 'pid' %}{% set value = application.institution_pid %}{% endif %}
+            {% if value %}
+            <p><b>{{ label }}</b><br>{{ value }}</p>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+    <section class="panel padded">
+      <div class="section-head">
+        <div><h2>Document verification</h2><p>PDF, Pillow-supported image formats and text-based formats · 15 MB per file</p></div>
+        <span class="chip">{{ documents|length }} files</span>
+      </div>
+      {% if documents %}
+        {% for d in documents %}
+        <div class="doc-row">
+          <span class="fileicon">{{ 'PDF' if d.original_name.lower().endswith('.pdf') else 'IMG' if ('.' + d.original_name.rsplit('.',1)[-1].lower()) in image_extensions else 'TXT' }}</span>
+          <div class="grow"><b>{{ d.original_name }}</b><small>{{ (d.size/1024)|round(1) }} KB · {{ d.created_at[:10] }} · {{ 'Text extracted' if d.extracted_text else 'Manual review needed' }}</small></div>
+          <span class="status">{{ d.status }}</span>
+          <div class="folder-actions">
+            {% if d.original_file_available %}
+            <a class="teal" target="_blank" rel="noopener" href="{{ url_for('application_document_file',app_id=application.id,document_id=d.id,action='view') }}">View</a>
+            <a class="teal" href="{{ url_for('application_document_file',app_id=application.id,document_id=d.id,action='download') }}">Download</a>
+            {% else %}
+            <small class="muted">Original proof unavailable</small>
+            {% endif %}
+            {% if current_user.role == 'institution' and application.user_id == current_user.id and application.status in ['Draft','Correction Required','Resubmitted'] %}
+            <form method="post" action="{{ url_for('delete_document',app_id=application.id,document_id=d.id) }}" onsubmit="return confirm('Delete this proof and its extracted text?')">
+              <button class="btn small danger" type="submit">Delete</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="muted">No documents uploaded yet.</p>
+      {% endif %}
+      {% if current_user.role == 'institution' and application.user_id == current_user.id and application.status in ['Draft','Correction Required','Resubmitted'] %}
+      <form class="upload" method="post" action="{{ url_for('upload_document',app_id=application.id) }}" enctype="multipart/form-data">
+        <b>＋ Upload supporting documents</b><p>PDF, supported raster images, TXT, MD, CSV, JSON, XML, HTML</p>
+        <input type="file" name="files" accept="{{ upload_extensions|join(',') }}" multiple required>
+        <button class="btn">Upload files</button>
+      </form>
+      {% endif %}
+    </section>
+    {% if current_user.role in ['admin','reviewer'] %}
+    <section class="panel padded ai-review-panel">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">AI CROSS-CHECK</div>
+          <h2>AI + rules-based review</h2>
+          <p>Compares application/profile details against proof OCR and runs the pathway checklist to suggest a review stage.</p>
+        </div>
+        <form method="post" action="{{ url_for('review_application_with_ai',app_id=application.id) }}">
+          <button class="btn primary" type="submit" {% if not ai_review_configured %}disabled{% endif %}>Run AI + rules review</button>
+        </form>
+      </div>
+      <div class="notice ai-disclosure">
+        Running this check sends relevant application/profile fields and redacted excerpts of extracted proof text
+        to OpenRouter under its provider policies. Avoid unnecessary personal data in uploads. AI findings and
+        confidence scores are suggestions only. Original file bytes are not retained by this MVP; verify results
+        against the institution's source proof before taking action.
+      </div>
+      {% if not ai_review_configured %}
+      <p class="flash warning">AI review is not configured. Set OPENROUTER_API_KEY in the server environment to enable it.</p>
+      {% endif %}
+      {% if application.ai_review %}
+        {% if application.ai_review.status == 'stale' %}
+        <p class="flash warning">Proofs changed since the last AI review. Run the cross-check again.</p>
+        {% elif application.ai_review.status == 'failed' %}
+        <p class="flash warning">AI comparison did not finish: {{ application.ai_review.error }} Rules-based results are available below, but no combined stage suggestion was generated.</p>
+        {% else %}
+        <p class="muted">Reviewed {{ application.ai_review.checked_at }} ·
+          {{ application.ai_review.provider }} · {{ application.ai_review.model }}</p>
+        <p>{{ application.ai_review.summary }}</p>
+        {% if application.ai_review.findings %}
+          {% for finding in application.ai_review.findings %}
+          <article class="finding ai-finding">
+            <div class="finding-head">
+              <b>{{ finding.field }}</b>
+              <span class="status s-{{ finding.severity }}">{{ finding.severity|title }} concern</span>
+              <span class="score">{{ finding.confidence }}%<small>AI confidence</small></span>
+            </div>
+            <p>{{ finding.issue }}</p>
+            <div class="evidence">
+              <b>Proof: {{ finding.document }}</b><br>
+              Form/profile value: {{ finding.form_value or 'Not provided' }}<br>
+              OCR value: {{ finding.proof_value or 'Not detected' }}
+            </div>
+            <p><b>Suggested correction / follow-up:</b> {{ finding.suggestion }}</p>
+          </article>
+          {% endfor %}
+        {% else %}
+        <p class="muted">No potential mismatches were identified. This does not verify authenticity or correctness.</p>
+        {% endif %}
+        {% endif %}
+      {% else %}
+        <p class="muted">No AI cross-check has been run for this application.</p>
+      {% endif %}
+      {% if review_analysis %}
+        {% if review_analysis.get('status') == 'stale' %}
+        <p class="flash warning">Review checks are stale because proofs or rules-based results changed. Run AI + rules review again.</p>
+        {% elif review_analysis.get('status') == 'completed' %}
+        <div class="recommendation">
+          <b>Suggested review stage: {{ review_analysis.get('recommendation') }}</b>
+          <p>{{ review_analysis.get('reason') }}</p>
+          <small>Suggestion only. The application stage changes only after an administrator saves the review action.</small>
+        </div>
+        {% elif review_analysis.get('status') == 'partial' %}
+        <p class="flash warning">Combined review is incomplete. {{ review_analysis.get('reason') }}</p>
+        {% endif %}
+      {% endif %}
+    </section>
+    {% endif %}
+    <section class="panel padded">
+      <div class="section-head">
+        <div><h2>AI-assisted findings</h2><p>Potential gaps and keyword matches from extracted text.</p></div>
+        <form method="post" action="{{ url_for('validate_application',app_id=application.id) }}"><button class="btn">↻ Run validation</button></form>
+      </div>
+      {% if findings %}
+        {% for f in findings %}
+        <article class="finding">
+          <div class="finding-head">
+            <b>{{ f.issue }}</b>
+            <span class="status {{ 's-correction-required' if f.status=='not_detected' else 's-completed' }}">{{ 'Potential gap' if f.status=='not_detected' else 'Possible evidence' }}</span>
+            <span class="score">{{ (f.confidence*100)|round|int }}%<small>heuristic score</small></span>
+          </div>
+          <p>{{ f.explanation }}</p><div class="evidence"><b>Evidence detected</b><br>{{ f.evidence }}</div>
+        </article>
+        {% endfor %}
+      {% else %}
+        <p class="muted">No findings yet. Run validation after uploading documents.</p>
+      {% endif %}
+      <p class="fine">Scores are heuristic indicators, not calibrated probabilities. Matches do not prove authenticity, completeness or compliance.</p>
+    </section>
+    {% if application.reviewer_notes or application.correction_request %}
+    <section class="panel padded">
+      <h2>Reviewer feedback</h2>
+      {% if application.correction_request %}<p><b>Correction request</b><br>{{ application.correction_request }}</p>{% endif %}
+      {% if application.reviewer_notes %}<p><b>Reviewer notes</b><br>{{ application.reviewer_notes }}</p>{% endif %}
+      {% if application.next_step %}<p><b>Recommended next step</b><br>{{ application.next_step }}</p>{% endif %}
+    </section>
+    {% endif %}
+  </div>
+  <aside class="stack">
+    <section class="panel padded">
+      <div class="eyebrow">APPLICATION SUMMARY</div>
+      <p>Reference <b>#{{ application.id }}</b></p>
+      <p>AICTE PID <b>{{ application.institution_pid or '—' }}</b></p>
+      <p>Status <b>{{ application.status }}</b></p>
+      <p>Created <b>{{ application.created_at[:10] }}</b></p>
+      <p>Updated <b>{{ application.updated_at[:10] }}</b></p>
+      {% if current_user.role=='institution' and application.status in ['Draft','Correction Required'] %}
+      <form method="post" action="{{ url_for('submit_application',app_id=application.id) }}"><button class="btn primary full">{{ 'Resubmit application' if application.status=='Correction Required' else 'Submit application' }} →</button></form>
+      {% endif %}
+    </section>
+    {% if current_user.role in ['admin','reviewer'] %}
+    <section class="panel padded">
+      <div class="eyebrow">REVIEW ACTIONS</div><h2>Update review stage</h2>
+      {% if current_user.role == 'admin' %}
+      {% if review_analysis.get('status') == 'completed' %}
+      <p class="muted">Review checks suggest <b>{{ review_analysis.get('recommendation') }}</b>. Confirm or override it below.</p>
+      {% else %}
+      <p class="muted">Run the AI + rules review to get a suggested stage. You can still update the stage manually.</p>
+      {% endif %}
+      <form method="post" action="{{ url_for('review_application',app_id=application.id) }}" class="form-stack">
+        <label>Workflow status<select name="status">{% for s in ['Submitted','Under Review','Correction Required','Resubmitted','Final Review','Completed'] %}<option {% if review_analysis.get('status') == 'completed' and review_analysis.get('recommendation') == s %}selected{% elif review_analysis.get('status') != 'completed' and application.status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></label>
+        <label>Correction request<textarea name="correction_request" rows="3">{{ application.correction_request or (review_analysis.get('suggested_correction_request', '') if review_analysis.get('status') == 'completed' else '') }}</textarea></label>
+        <label>Reviewer notes<textarea name="reviewer_notes" rows="3">{{ application.reviewer_notes }}</textarea></label>
+        <label>Recommended next step<textarea name="next_step" rows="2">{{ application.next_step or (review_analysis.get('suggested_next_step', '') if review_analysis.get('status') == 'completed' else '') }}</textarea></label>
+        <button class="btn primary full">Save review action</button>
+      </form>
+      {% else %}
+      <p class="muted">Reviewers can run AI + rules checks and leave findings. Only an administrator can save a workflow-stage change.</p>
+      {% endif %}
+    </section>
+    {% endif %}
+    <div class="notice">Share only documents you are authorized to upload. Do not submit passwords or unnecessary personal data.</div>
+  </aside>
+</div>
+{% endblock %}

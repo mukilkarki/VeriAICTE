@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Institution Profile — VeriAICTE{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">INSTITUTION PROFILE</div>
+    <h1>Institution details</h1>
+    <p>Complete the required details to access your application workspace.</p>
+  </div>
+</div>
+<div class="panel form-panel">
+  <div class="notice">Your AICTE Permanent ID (PID) is assigned automatically when you first save a complete profile. It stays linked to this account.</div>
+  {% if user.pid %}<p><b>AICTE Permanent ID:</b> {{ user.pid }}</p>{% endif %}
+  <form method="post" class="form-stack">
+    <section>
+      <h2>Institution identity</h2>
+      <label>Institution name *<input name="institution_name" required value="{{ user.get('institution_name','') }}"></label>
+      <label>Institution type *
+        <select name="institution_type" required>
+          <option value="">Select institution type</option>
+          {% for item in ['Government','Government aided','Private / self-financing','Deemed to be University','University','Other'] %}
+          <option value="{{ item }}" {% if user.get('institution_type')==item %}selected{% endif %}>{{ item }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </section>
+    <section>
+      <h2>Contact information</h2>
+      <label>Address *<textarea name="address" rows="2" required>{{ user.get('address','') }}</textarea></label>
+      <label>State *<input name="state" required value="{{ user.get('state','') }}"></label>
+      <label>District *<input name="district" required value="{{ user.get('district','') }}"></label>
+      <label>PIN code *<input name="pin_code" required inputmode="numeric" value="{{ user.get('pin_code','') }}"></label>
+      <label>Phone *<input name="phone" type="tel" required value="{{ user.get('phone','') }}"></label>
+      <label>Institution email *<input name="institution_email" type="email" required value="{{ user.get('institution_email') or user.email }}"></label>
+    </section>
+    <section>
+      <h2>Sponsoring body</h2>
+      <label>Trust / Society / Company name *<input name="sponsoring_body_name" required value="{{ user.get('sponsoring_body_name','') }}"></label>
+      <label>Trust / Society / Company address *<textarea name="sponsoring_body_address" rows="2" required>{{ user.get('sponsoring_body_address','') }}</textarea></label>
+    </section>
+    <section>
+      <h2>Head of institution</h2>
+      <label>Principal / Director name *<input name="head_name" required value="{{ user.get('head_name','') }}"></label>
+      <label>Designation *<input name="head_designation" required value="{{ user.get('head_designation','') }}"></label>
+      <label>Contact phone *<input name="head_phone" type="tel" required value="{{ user.get('head_phone','') }}"></label>
+      <label>Contact email *<input name="head_email" type="email" required value="{{ user.get('head_email','') }}"></label>
+    </section>
+    <section>
+      <h2>Affiliation</h2>
+      <label>Affiliating University / Board *<input name="affiliation" required value="{{ user.get('affiliation','') }}"></label>
+    </section>
+    <section>
+      <h2>Academic information <span class="muted">(optional)</span></h2>
+      <label>Programmes, courses and approved intake<textarea name="programmes" rows="3">{{ user.get('programmes','') }}</textarea></label>
+    </section>
+    <section>
+      <h2>Faculty <span class="muted">(optional)</span></h2>
+      <label>Faculty names, designations and qualifications<textarea name="faculty" rows="3">{{ user.get('faculty','') }}</textarea></label>
+    </section>
+    <section>
+      <h2>Infrastructure <span class="muted">(optional)</span></h2>
+      <label>Department-wise facilities, laboratories and equipment<textarea name="infrastructure" rows="3">{{ user.get('infrastructure','') }}</textarea></label>
+    </section>
+    <section>
+      <h2>Accreditation <span class="muted">(optional)</span></h2>
+      <label>NAAC / NBA status<textarea name="accreditation" rows="2">{{ user.get('accreditation','') }}</textarea></label>
+    </section>
+    <section>
+      <h2>Governance <span class="muted">(optional)</span></h2>
+      <label>Organizational chart and grievance redressal mechanisms<textarea name="governance" rows="3">{{ user.get('governance','') }}</textarea></label>
+    </section>
+    <section>
+      <h2>Approval records <span class="muted">(optional)</span></h2>
+      <label>Current approval status, academic year and approval letter<textarea name="approval_records" rows="3">{{ user.get('approval_records','') }}</textarea></label>
+    </section>
+    <section>
+      <h2>Public disclosure</h2>
+      <label>Official website *<input name="official_website" type="url" required placeholder="https://example.edu" value="{{ user.get('official_website','') }}"></label>
+      <label>Mandatory disclosure information *<textarea name="mandatory_disclosure" rows="4" required>{{ user.get('mandatory_disclosure','') }}</textarea></label>
+    </section>
+    <p class="muted">* Required fields</p>
+    <button class="btn primary">Save institution profile</button>
+  </form>
+</div>
+{% endblock %}

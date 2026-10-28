@@ -1,0 +1,9 @@
+Flask>=3.0,<4.0
+firebase-admin>=6.5,<8.0
+python-dotenv>=1.0,<2.0
+pypdf>=4.0
+pypdfium2>=4.30,<6.0
+Pillow>=10.0
+pytesseract>=0.3.10
+reportlab>=4.2,<5.0
+gunicorn>=21.2

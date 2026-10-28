@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Create account' if mode=='register' else 'Sign in' }} — VeriAICTE{% endblock %}
+{% block content %}
+<section class="auth-wrap">
+  <div class="auth-aside">
+    <div class="eyebrow">VERIAICTE WORKSPACE</div>
+    <h1>{{ 'Start your application workspace.' if mode=='register' else 'Welcome back.' }}</h1>
+    <p>{{ 'Create an account, then complete your institution profile before preparing applications.' if mode=='register' else 'Sign in to continue your institution submission or reviewer queue.' }}</p>
+    <ul><li>✓ Role-based access</li><li>✓ Track each review stage</li><li>✓ Record key actions</li><li>admin demo account :</li>admin@gmail.com</li><li>adminpassword123</li><li>user demo account :</li><li>trustee@example.org</li><li>userpassword123</li></ul>
+  </div>
+  <div class="panel auth-panel">
+    <h2>{{ 'Create account' if mode=='register' else 'Sign in' }}</h2>
+    <p class="muted">{{ 'Use a unique password of at least 6 characters.' if mode=='register' else 'Enter your registered credentials.' }}</p>
+    {% if not firebase_config.apiKey or not firebase_config.authDomain or not firebase_config.projectId or not firebase_config.appId %}
+    <div class="flash danger" role="alert">Firebase web settings are missing. Add FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_PROJECT_ID and FIREBASE_APP_ID to .env.</div>
+    {% endif %}
+    <div id="auth-error" class="flash danger" role="alert" hidden></div>
+    <form id="auth-form" data-mode="{{ mode }}" class="form-stack">
+      {% if mode=='register' %}
+      <label>Full name<input name="name" required autocomplete="name" placeholder="Your full name"></label>
+      {% endif %}
+      <label>Email address<input type="email" name="email" required autocomplete="email" placeholder="you@institution.edu"></label>
+      <label>Password<input type="password" name="password" required {% if mode=='register' %}minlength="6"{% endif %} autocomplete="{{ 'new-password' if mode=='register' else 'current-password' }}" placeholder="{{ 'At least 6 characters' if mode=='register' else 'Your password' }}"></label>
+      {% if turnstile_site_key %}
+      <div class="captcha-wrap">
+        <div id="turnstile-widget" data-sitekey="{{ turnstile_site_key }}"></div>
+        <p id="turnstile-status" class="muted" role="status" aria-live="polite">Complete the security check to continue.</p>
+      </div>
+      {% else %}
+      <div class="flash danger" role="alert">Cloudflare Turnstile is not configured. Set CLOUDFLARE_TURNSTILE_SITE_KEY and CLOUDFLARE_TURNSTILE_SECRET_KEY.</div>
+      {% endif %}
+      <button class="btn primary full" disabled>{{ 'Create account' if mode=='register' else 'Sign in' }} →</button>
+    </form>
+    <noscript><p class="flash danger">JavaScript is required for Firebase sign-in.</p></noscript>
+    <p class="muted">{% if mode=='register' %}Already registered? <a class="teal" href="{{ url_for('login') }}">Sign in</a>{% else %}Need an institution account? <a class="teal" href="{{ url_for('register') }}">Register here</a>{% endif %}</p>
+  </div>
+</section>
+<script id="firebase-config" type="application/json">{{ firebase_config|tojson }}</script>
+<script>window.firebaseConfig = JSON.parse(document.getElementById('firebase-config').textContent);</script>
+{% if turnstile_site_key %}
+<script id="cloudflare-turnstile-api" src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+{% endif %}
+<script type="module" src="{{ url_for('static', filename='firebase-auth.js') }}"></script>
+{% endblock %}

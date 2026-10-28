@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% block title %}New Application — VeriAICTE{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">NEW APPLICATION</div>
+    <h1>Set up an application</h1>
+    <p>This creates a draft. Upload documents and submit it when ready.</p>
+  </div>
+  <a class="btn" href="{{ url_for('institution_dashboard') }}">← Back</a>
+</div>
+<div class="panel form-panel application-form-panel">
+  <form method="post" class="form-stack" id="new-application-form">
+    <label>Institution name<input value="{{ user.institution_name }}" readonly></label>
+    <label>AICTE Permanent ID<input value="{{ user.pid }}" readonly></label>
+    <label>Application pathway
+      <select name="pathway" id="application-pathway">
+        {% for key,label in pathways.items() %}
+        <option value="{{ key }}" {% if request.form.get('pathway', 'new') == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <small>Choose the closest pathway and confirm applicability with current official guidance.</small>
+    </label>
+    <label>Application title<input name="title" value="{{ request.form.get('title', '') }}" placeholder="e.g. New Institution Approval"></label>
+
+    <div class="new-institution-details" id="new-institution-details">
+      <h2>NEW INSTITUTION</h2>
+      <section>
+        <h3>Institution Details</h3>
+        <div class="form-grid">
+          <label>Name of the Institution
+            <input name="institution_name" required value="{{ form_values.get('institution_name', user.get('institution_name', '')) }}">
+          </label>
+          <label class="span-two">Address &amp; Location
+            <textarea name="address" rows="2" required>{{ form_values.get('address', user.get('address', '')) }}</textarea>
+          </label>
+          <label>State / UT
+            <select name="state" required>
+              <option value="">Select State / UT</option>
+              {% for state in state_uts %}
+              <option value="{{ state }}" {% if form_values.get('state', user.get('state', '')) == state %}selected{% endif %}>{{ state }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>District
+            {% set profile_district = user.get('district', '') %}
+            {% set district_value = form_values.get('district', profile_district) %}
+            <select name="district" id="district-select" required>
+              <option value="">Select district</option>
+              {% if profile_district %}
+              <option value="{{ profile_district }}" {% if district_value == profile_district %}selected{% endif %}>{{ profile_district }}</option>
+              {% endif %}
+              <option value="Other" {% if district_value and district_value != profile_district %}selected{% endif %}>Other (enter district)</option>
+            </select>
+            <input name="other_district" id="other-district" aria-label="Enter district" placeholder="Enter district" value="{% if district_value != profile_district %}{{ district_value }}{% endif %}">
+          </label>
+          <label>PIN Code
+            <input name="pin_code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required value="{{ form_values.get('pin_code', user.get('pin_code', '')) }}">
+          </label>
+          <label>Institution Type (Trust / Society / Company)
+            <select name="institution_type" required>
+              <option value="">Select type</option>
+              {% for item in ['Trust', 'Society', 'Company'] %}
+              <option value="{{ item }}" {% if form_values.get('institution_type') == item or (not form_values and user.get('institution_type') == item) %}selected{% endif %}>{{ item }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <fieldset class="radio-group">
+            <legend>Minority Status</legend>
+            {% for item in ['Yes', 'No'] %}
+            <label><input type="radio" name="minority_status" value="{{ item }}" required {% if form_values.get('minority_status') == item or (not form_values and item == 'No') %}checked{% endif %}> {{ item }}</label>
+            {% endfor %}
+          </fieldset>
+          <label id="minority-type-label">Minority Type
+            <select name="minority_type" id="minority-type">
+              <option value="">Select type</option>
+              {% for item in ['Linguistic', 'Religious'] %}
+              <option value="{{ item }}" {% if form_values.get('minority_type') == item %}selected{% endif %}>{{ item }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>Website URL
+            <input name="website_url" type="url" required placeholder="https://example.edu" value="{{ form_values.get('website_url', user.get('official_website', '')) }}">
+          </label>
+          <label>Official Email ID
+            <input name="official_email" type="email" required value="{{ form_values.get('official_email', user.get('institution_email') or user.email) }}">
+          </label>
+          <label>Landline / Alternate Phone
+            <input name="landline_phone" type="tel" inputmode="numeric" required value="{{ form_values.get('landline_phone', user.get('phone', '')) }}">
+          </label>
+        </div>
+      </section>
+
+      <section>
+        <h3>Trust / Society / Company</h3>
+        <div class="form-grid">
+          <label>Name of the Promoting Body
+            <input name="promoting_body_name" required value="{{ form_values.get('promoting_body_name', user.get('sponsoring_body_name', '')) }}">
+          </label>
+          <label>Registration Number
+            <input name="registration_number" required value="{{ form_values.get('registration_number', '') }}">
+          </label>
+          <label>Registration Date
+            <input name="registration_date" type="date" required value="{{ form_values.get('registration_date', '') }}">
+          </label>
+          <label>PAN of Trust / Society
+            <input name="trust_pan" maxlength="10" pattern="[A-Za-z0-9]{10}" required value="{{ form_values.get('trust_pan', '') }}">
+          </label>
+          <label>Authorized Signatory Name
+            <input name="signatory_name" required value="{{ form_values.get('signatory_name', user.get('head_name', '')) }}">
+          </label>
+          <label>Signatory Designation
+            <input name="signatory_designation" required value="{{ form_values.get('signatory_designation', user.get('head_designation', '')) }}">
+          </label>
+          <label>Signatory Mobile Number
+            <input name="signatory_mobile" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required value="{{ form_values.get('signatory_mobile', user.get('head_phone', '')) }}">
+          </label>
+          <label>Signatory Email ID
+            <input name="signatory_email" type="email" required value="{{ form_values.get('signatory_email', user.get('head_email', '')) }}">
+          </label>
+        </div>
+      </section>
+
+      <section>
+        <h3>Banking Details</h3>
+        <div class="form-grid">
+          <label>Bank Name
+            <input name="bank_name" required value="{{ form_values.get('bank_name', '') }}">
+          </label>
+          <label>Bank Account Number
+            <input name="bank_account_number" inputmode="numeric" pattern="[0-9]+" required value="{{ form_values.get('bank_account_number', '') }}">
+          </label>
+          <label>IFSC Code
+            <input name="ifsc_code" maxlength="11" pattern="[A-Za-z]{4}0[A-Za-z0-9]{6}" required value="{{ form_values.get('ifsc_code', '') }}">
+          </label>
+        </div>
+      </section>
+
+      <section>
+        <h3>Land &amp; Building</h3>
+        <div class="form-grid">
+          <label>Land Ownership Type
+            <select name="land_ownership_type" required>
+              <option value="">Select ownership</option>
+              {% for item in ['Lease', 'Own'] %}
+              <option value="{{ item }}" {% if form_values.get('land_ownership_type') == item %}selected{% endif %}>{{ item }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>Total Land Area (in acres)
+            <input name="land_area_acres" type="number" min="0" step="any" required value="{{ form_values.get('land_area_acres', '') }}">
+          </label>
+          <label>Total Built-up Area (sq. meters)
+            <input name="built_up_area_sq_meters" type="number" min="0" step="any" required value="{{ form_values.get('built_up_area_sq_meters', '') }}">
+          </label>
+        </div>
+      </section>
+    </div>
+
+    <div class="new-institution-details" id="existing-institution-details" hidden>
+      <h2>EXISTING INSTITUTE</h2>
+      <section>
+        <h3>Basic Identification</h3>
+        <div class="form-grid">
+          <label>AICTE Permanent ID (PID)
+            <input value="{{ user.pid }}" readonly>
+          </label>
+          <label>Current Academic Application ID
+            <input value="{{ application_id }}" readonly>
+          </label>
+        </div>
+      </section>
+      <section>
+        <h3>Head of Institution (HOI)</h3>
+        <div class="form-grid">
+          <label>Name of Principal / Director
+            <input name="hoi_name" required value="{{ existing_form_values.get('hoi_name', user.get('head_name', '')) }}">
+          </label>
+          <label>Appointment Type
+            <select name="appointment_type" required>
+              <option value="">Select appointment type</option>
+              {% for item in ['Regular', 'Acting'] %}
+              <option value="{{ item }}" {% if existing_form_values.get('appointment_type') == item %}selected{% endif %}>{{ item }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>Mobile Number of HOI
+            <input name="hoi_mobile" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" required value="{{ existing_form_values.get('hoi_mobile', user.get('head_phone', '')) }}">
+          </label>
+          <label>Email ID of HOI
+            <input name="hoi_email" type="email" required value="{{ existing_form_values.get('hoi_email', user.get('head_email', '')) }}">
+          </label>
+        </div>
+      </section>
+      <section>
+        <h3>Affiliation Status</h3>
+        <div class="form-grid">
+          <label>Name of Affiliating University / Board
+            {% set profile_affiliation = user.get('affiliation', '') %}
+            {% set affiliation_value = existing_form_values.get('affiliating_university', profile_affiliation) %}
+            <select name="affiliating_university" id="affiliating-university" required>
+              <option value="">Select University / Board</option>
+              {% if profile_affiliation %}
+              <option value="{{ profile_affiliation }}" {% if affiliation_value == profile_affiliation %}selected{% endif %}>{{ profile_affiliation }}</option>
+              {% endif %}
+              <option value="Other" {% if affiliation_value and affiliation_value != profile_affiliation %}selected{% endif %}>Other (enter name)</option>
+            </select>
+            <input name="other_affiliating_university" id="other-affiliating-university" aria-label="Enter affiliating university or board" placeholder="Enter University / Board" value="{% if affiliation_value != profile_affiliation %}{{ affiliation_value }}{% endif %}">
+          </label>
+          <label>Affiliation Validity Period / Year
+            <select name="affiliation_validity_year" required>
+              <option value="">Select year</option>
+              {% for year in affiliation_years %}
+              <option value="{{ year }}" {% if existing_form_values.get('affiliation_validity_year', user.get('affiliation_validity_year', '')|string) == year|string %}selected{% endif %}>{{ year }}</option>
+              {% endfor %}
+            </select>
+          </label>
+        </div>
+      </section>
+      <section>
+        <h3>Course &amp; Intake Request</h3>
+        <div class="form-grid">
+          <label>Existing Approved Intake (Per Course)
+            <input name="existing_approved_intake" type="number" min="0" step="1" required value="{{ existing_form_values.get('existing_approved_intake', user.get('approved_intake_per_course', user.get('approved_intake', ''))) }}">
+          </label>
+          <label>Applied Intake Status
+            <select name="applied_intake_status" required>
+              <option value="">Select status</option>
+              {% for item in ['No Change', 'Variation'] %}
+              <option value="{{ item }}" {% if existing_form_values.get('applied_intake_status') == item %}selected{% endif %}>{{ item }}</option>
+              {% endfor %}
+            </select>
+          </label>
+        </div>
+      </section>
+      <section>
+        <h3>Operational &amp; Quality Metrics</h3>
+        <div class="form-grid">
+          <label>Total Count of Appointed Faculty
+            <input name="total_faculty" type="number" min="0" step="1" required value="{{ existing_form_values.get('total_faculty', '') }}">
+          </label>
+          <label>Total Enrolled Students (Current Strength)
+            <input name="current_student_strength" type="number" min="0" step="1" required value="{{ existing_form_values.get('current_student_strength', '') }}">
+          </label>
+          <label>Mandatory Disclosure Web Link
+            <input name="mandatory_disclosure_url" type="url" required placeholder="https://example.edu/disclosure" value="{{ existing_form_values.get('mandatory_disclosure_url', user.get('official_website', '')) }}">
+          </label>
+        </div>
+      </section>
+      <section>
+        <h3>Safety &amp; Compliance</h3>
+        <div class="form-grid">
+          <label>Fire Safety Certificate Expiry Date
+            <input name="fire_safety_expiry_date" type="date" required value="{{ existing_form_values.get('fire_safety_expiry_date', '') }}">
+          </label>
+          <label>Structural Stability Certificate Expiry Date
+            <input name="structural_stability_expiry_date" type="date" required value="{{ existing_form_values.get('structural_stability_expiry_date', '') }}">
+          </label>
+          <fieldset class="radio-group">
+            <legend>Anti-Ragging Committee Setup Status</legend>
+            {% for item in ['Yes', 'No'] %}
+            <label><input type="radio" name="anti_ragging_status" value="{{ item }}" required {% if existing_form_values.get('anti_ragging_status') == item %}checked{% endif %}> {{ item }}</label>
+            {% endfor %}
+          </fieldset>
+        </div>
+      </section>
+    </div>
+
+    <div class="notice">Institution details are prefilled from your saved profile where available. Your application starts in Draft status. The checklist is preliminary and does not certify compliance.</div>
+    <button class="btn primary">Create draft →</button>
+  </form>
+</div>
+<script>
+  const pathwaySelect = document.getElementById('application-pathway');
+  const institutionDetails = document.getElementById('new-institution-details');
+  const existingDetails = document.getElementById('existing-institution-details');
+  const districtSelect = document.getElementById('district-select');
+  const otherDistrict = document.getElementById('other-district');
+  const affiliatingUniversity = document.getElementById('affiliating-university');
+  const otherAffiliatingUniversity = document.getElementById('other-affiliating-university');
+  const minorityType = document.getElementById('minority-type');
+  const minorityTypeLabel = document.getElementById('minority-type-label');
+
+  function updateApplicationForm() {
+    const showDetails = pathwaySelect.value === 'new';
+    const showExistingDetails = pathwaySelect.value === 'existing';
+    institutionDetails.hidden = !showDetails;
+    existingDetails.hidden = !showExistingDetails;
+    institutionDetails.querySelectorAll('input, select, textarea').forEach((field) => {
+      field.disabled = !showDetails;
+    });
+    existingDetails.querySelectorAll('input, select, textarea').forEach((field) => {
+      field.disabled = !showExistingDetails;
+    });
+    updateDistrictField();
+    updateMinorityField();
+    updateAffiliationField();
+  }
+
+  function updateDistrictField() {
+    const needsOther = districtSelect.value === 'Other';
+    otherDistrict.hidden = !needsOther;
+    otherDistrict.disabled = !needsOther || pathwaySelect.value !== 'new';
+    otherDistrict.required = needsOther && pathwaySelect.value === 'new';
+  }
+
+  function updateMinorityField() {
+    const minorityStatus = document.querySelector('input[name="minority_status"]:checked')?.value;
+    const required = minorityStatus === 'Yes' && pathwaySelect.value === 'new';
+    minorityType.disabled = !required;
+    minorityType.required = required;
+    minorityTypeLabel.hidden = !required;
+  }
+
+  function updateAffiliationField() {
+    const needsOther = affiliatingUniversity.value === 'Other';
+    otherAffiliatingUniversity.hidden = !needsOther;
+    otherAffiliatingUniversity.disabled = !needsOther || pathwaySelect.value !== 'existing';
+    otherAffiliatingUniversity.required = needsOther && pathwaySelect.value === 'existing';
+  }
+
+  pathwaySelect.addEventListener('change', updateApplicationForm);
+  districtSelect.addEventListener('change', updateDistrictField);
+  affiliatingUniversity.addEventListener('change', updateAffiliationField);
+  document.querySelectorAll('input[name="minority_status"]').forEach((field) => {
+    field.addEventListener('change', updateMinorityField);
+  });
+  updateApplicationForm();
+</script>
+{% endblock %}

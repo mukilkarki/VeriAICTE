@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% block title %}Admin Panel — VeriAICTE{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">ADMIN PANEL · {{ current_user.role|upper }}</div>
+    <h1>Compliance review console</h1>
+    <p>Review applications, inspect evidence, manage access and follow the audit trail.</p>
+  </div>
+  <a class="btn" href="{{ url_for('export_csv') }}">↓ Export applications CSV</a>
+</div>
+<div class="stats">
+  <div><span>Total applications</span><strong>{{ counts.total }}</strong><small>All submissions</small></div>
+  <div><span>Pending review</span><strong>{{ counts.pending }}</strong><small>Submitted through final review</small></div>
+  <div><span>Potential gaps</span><strong>{{ counts.flagged }}</strong><small>Findings not detected</small></div>
+  <div><span>Completed</span><strong>{{ counts.completed }}</strong><small>Reviewer-marked complete</small></div>
+</div>
+<nav class="tabs admin-tabs" aria-label="Admin sections">
+  <a href="#queue" aria-controls="queue">Application queue <i>{{ applications|length }}</i></a>
+  <a href="#documents" aria-controls="documents">Documents <i>{{ docs|length }}</i></a>
+  <a href="#findings" aria-controls="findings">AI findings <i>{{ findings|length }}</i></a>
+  <a href="#users" aria-controls="users">User management <i>{{ users|length }}</i></a>
+  <a href="#audit" aria-controls="audit">Audit logs</a>
+</nav>
+
+<section id="queue" class="admin-section" aria-labelledby="queue-title">
+  <div class="section-head">
+    <div><h2 id="queue-title">Application queue</h2><p>Each institution/user has a folder with applications, form PDFs, and uploaded proofs.</p></div>
+    <input class="search" id="queueSearch" placeholder="Search queue…" oninput="filterRows('queueSearch','queueFolders')">
+  </div>
+  <div id="queueFolders" class="application-folders">
+    {% for group in application_groups %}
+    <details class="user-folder" open>
+      <summary>
+        <span><b>{{ group.institution_name }}</b><small>{{ group.submitter_email }} · {{ group.applications|length }} application(s)</small></span>
+        <span class="folder-label">Institution folder</span>
+      </summary>
+      <div class="user-folder-content">
+        {% for a in group.applications %}
+        <details class="application-folder">
+          <summary>
+            <span><b>{{ a.title }}</b><small>#{{ a.id }} · {{ pathways[a.pathway] }} · Updated {{ a.updated_at[:10] }}</small></span>
+            <span class="status s-{{ a.status|lower|replace(' ','-') }}">{{ a.status }}</span>
+          </summary>
+          <div class="application-folder-content">
+            <div class="folder-actions">
+              <a class="btn small" href="{{ url_for('application_detail',app_id=a.id) }}">Open review →</a>
+              <a class="btn small" href="{{ url_for('download_application_form_pdf',app_id=a.id) }}">↓ Application form PDF</a>
+            </div>
+            <h4>Proofs &amp; documents</h4>
+            {% if a.documents %}
+            <ul class="proof-list">
+              {% for d in a.documents %}
+              <li>
+                <span><b>{{ d.original_name }}</b><small>{{ (d.size/1024)|round(1) }} KB · {{ d.status }} · {{ d.created_at[:10] }}</small></span>
+                {% if d.original_file_available %}
+                <span class="folder-actions">
+                  <a class="teal" href="{{ url_for('application_document_file',app_id=a.id,document_id=d.id,action='view') }}" target="_blank" rel="noopener">View</a>
+                  <a class="teal" href="{{ url_for('application_document_file',app_id=a.id,document_id=d.id,action='download') }}">Download</a>
+                </span>
+                {% else %}
+                <span class="muted">Original proof unavailable</span>
+                {% endif %}
+              </li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p class="muted">No proof documents uploaded.</p>
+            {% endif %}
+          </div>
+        </details>
+        {% endfor %}
+      </div>
+    </details>
+    {% else %}
+    <div class="panel empty">No applications in the queue.</div>
+    {% endfor %}
+  </div>
+</section>
+
+<section id="documents" class="admin-section" aria-labelledby="documents-title">
+  <div class="section-head">
+    <div><h2 id="documents-title">Document verification</h2><p>View/download original proofs where retained. Older uploads without stored originals must be re-uploaded.</p></div>
+  </div>
+  <div class="panel table-wrap">
+    <table>
+      <thead><tr><th>Document</th><th>Institution / application</th><th>Size</th><th>Extraction status</th><th>Uploaded</th><th>File</th><th></th></tr></thead>
+      <tbody>
+        {% for d in docs %}
+        <tr>
+          <td><b>{{ d.original_name }}</b><small>Document #{{ d.id }}</small></td>
+          <td>{{ d.institution_name }}<small>{{ d.title }}</small></td>
+          <td>{{ (d.size/1024)|round(1) }} KB</td>
+          <td>{{ 'Text extracted' if d.has_extracted_text else 'Manual review' }}</td>
+          <td>{{ d.created_at[:10] }}</td>
+          <td>
+            {% if d.original_file_available %}
+            <a class="teal" target="_blank" rel="noopener" href="{{ url_for('application_document_file',app_id=d.application_id,document_id=d.id,action='view') }}">View</a>
+            <a class="teal" href="{{ url_for('application_document_file',app_id=d.application_id,document_id=d.id,action='download') }}">Download</a>
+            {% else %}Unavailable{% endif %}
+          </td>
+          <td><a class="teal" href="{{ url_for('application_detail',app_id=d.application_id) }}">Open →</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7">No documents uploaded.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="findings" class="admin-section" aria-labelledby="findings-title">
+  <div class="section-head"><div><h2 id="findings-title">AI findings</h2><p>Potential issue, evidence, confidence-like score and explanation.</p></div></div>
+  <div class="panel table-wrap">
+    <table>
+      <thead><tr><th>Issue</th><th>Institution / application</th><th>Result</th><th>Confidence</th><th>Evidence</th><th></th></tr></thead>
+      <tbody>
+        {% for f in findings %}
+        <tr>
+          <td><b>{{ f.issue }}</b><small>{{ f.explanation }}</small></td>
+          <td>{{ f.institution_name }}<small>{{ f.title }}</small></td>
+          <td>{{ 'Potential gap' if f.status=='not_detected' else 'Possible evidence' }}</td>
+          <td>{{ (f.confidence*100)|round|int }}%</td>
+          <td>{{ f.evidence }}</td>
+          <td><a class="teal" href="{{ url_for('application_detail',app_id=f.application_id) }}">Review →</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6">No findings yet. Open an application and run validation.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="users" class="admin-section" aria-labelledby="users-title">
+  <div class="section-head"><div><h2 id="users-title">User management</h2><p>Administrators can assign roles and disable accounts.</p></div></div>
+  <div class="panel table-wrap">
+    <table>
+      <thead><tr><th>User</th><th>Institution</th><th>Role</th><th>Access</th><th>Permissions</th></tr></thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td><b>{{ u.name }}</b><small>{{ u.email }} · #{{ u.id }}</small></td>
+          <td>{{ u.institution_name or '—' }}</td><td>{{ u.role }}</td><td>{{ 'Active' if u.active else 'Disabled' }}</td>
+          <td>
+            {% if current_user.role=='admin' %}
+            <div class="user-actions">
+              <form method="post" action="{{ url_for('update_role',uid=u.id) }}">
+                <select name="role">
+                  <option value="institution" {% if u.role=='institution' %}selected{% endif %}>Institution</option>
+                  <option value="reviewer" {% if u.role=='reviewer' %}selected{% endif %}>Reviewer</option>
+                  <option value="admin" {% if u.role=='admin' %}selected{% endif %}>Admin</option>
+                </select>
+                <button class="mini">Save</button>
+              </form>
+              <form method="post" action="{{ url_for('toggle_user',uid=u.id) }}"><button class="mini" type="submit">{{ 'Disable' if u.active else 'Enable' }}</button></form>
+            </div>
+            {% else %}Admin only{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="audit" class="admin-section" aria-labelledby="audit-title">
+  <div class="section-head"><div><h2 id="audit-title">Audit logs</h2><p>Who performed an action, what changed, and when.</p></div></div>
+  <div class="panel table-wrap">
+    <table>
+      <thead><tr><th>Timestamp (UTC)</th><th>Actor</th><th>Action</th><th>Target</th><th>Details</th></tr></thead>
+      <tbody>
+        {% for l in logs %}
+        <tr><td>{{ l.created_at }}</td><td>{{ l.actor_email or 'system' }}</td><td>{{ l.action }}</td><td>{{ l.target_type }}{% if l.target_id %} #{{ l.target_id }}{% endif %}</td><td>{{ l.details }}</td></tr>
+        {% else %}
+        <tr><td colspan="5">No audit events yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+<script src="{{ url_for('static',filename='app.js') }}"></script>
+{% endblock %}
